@@ -1,0 +1,54 @@
+UseTab: true
+TabWidth: 8
+IndentWidth: 8
+ColumnLimit: 140
+SortIncludes: false
+IncludeBlocks: Preserve
+PointerAlignment: Left
+
+SpaceBeforeAssignmentOperators: true
+SpaceAfterCStyleCast: true
+SpaceAfterTemplateKeyword: false
+SpacesBeforeTrailingComments: 1
+SpacesInParentheses: false
+SpacesInCStyleCastParentheses: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterFunctionDefinitionName: true
+  AfterFunctionDeclarationName: true
+
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignArrayOfStructures: Right
+AlignAfterOpenBracket: false
+AlignEscapedNewlines: true
+
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+
+SeparateDefinitionBlocks: Always
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterControlStatement: true
+  AfterExternBlock: true
+  BeforeElse: true
+  BeforeCatch: true
+  BeforeWhile: false
+  BeforeLambdaBody: true
+  SplitEmptyFunction: true 
+AlwaysBreakTemplateDeclarations: true
+
+AccessModifierOffset: 0
+NamespaceIndentation: All
+FixNamespaceComments: false
+
+IndentAccessModifiers: true
+IndentCaseLabels: true
+IndentExternBlock: true
+IndentGotoLabels: true
+IndentPPDirectives: AfterHash
+LambdaBodyIndentation: Signature
