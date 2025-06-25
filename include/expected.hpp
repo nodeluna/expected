@@ -58,18 +58,18 @@ namespace nl {
 			{
 				if (_has_value)
 				{
-					if constexpr (std::is_same_v<U, monostate>)
+					if constexpr (std::is_same<U, monostate>::value)
 					{
 						new (std::addressof(_value)) T();
 					}
-					else if constexpr (std::is_same_v<U, T>)
+					else if constexpr (std::is_same<U, T>::value)
 					{
 						new (std::addressof(_value)) T(other.value());
 					}
 					else
 					{
 						static_assert(
-						    not std::is_same_v<U, T> && "no available conversion between the provided value types");
+						    not std::is_same<U, T>::value, "no available conversion between the provided value types");
 					}
 				}
 				else
@@ -202,7 +202,7 @@ namespace nl {
 			template<class U = std::remove_cv_t<T>>
 			constexpr T value_or(U&& other) const&
 			{
-				static_assert(std::is_convertible_v<U, T>);
+				static_assert(std::is_convertible<U, T>::value, "the provided type must be convertible to the value type");
 				if (_has_value)
 					return _value;
 				else
@@ -212,7 +212,7 @@ namespace nl {
 			template<class U = std::remove_cv_t<E>>
 			constexpr E error_or(U&& other) const&
 			{
-				static_assert(std::is_convertible_v<U, E>);
+				static_assert(std::is_convertible<U, E>::value, "the provided type must be convertible to the error type");
 				if (not _has_value)
 					return _error;
 				else
