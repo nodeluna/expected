@@ -21,11 +21,11 @@
 #if __cplusplus >= 202002L
 #define _constexpr_destructor constexpr
 #define _construct_at(location, arg)\
-	std::construct_at(std::addressof(location), arg)
+	std::construct_at(location, arg)
 #else
 #define _constexpr_destructor
 #define _construct_at(location, arg)\
-	new (std::addressof(location)) arg;
+	new (location) arg;
 #endif
 
 namespace nl {
@@ -45,18 +45,18 @@ namespace nl {
 		public:
 			_constexpr expected(const T& t) : _has_value(true)
 			{
-				_construct_at(_value, T(t));
+				_construct_at(std::addressof(_value), T(t));
 			}
 
 			_constexpr expected(const E& e) : _has_value(false)
 			{
-				_construct_at(_error, E(e));
+				_construct_at(std::addressof(_error), E(e));
 			}
 
 			_constexpr expected() : _has_value(true)
 			{
 				static_assert(std::is_default_constructible<T>::value, "");
-				_construct_at(_value, T());
+				_construct_at(std::addressof(_value), T());
 			}
 
 			_constexpr expected& operator=(const expected& other)
@@ -65,7 +65,7 @@ namespace nl {
 				if (this != &other)
 				{
 					this->~expected();
-					new (this) expected(other);
+					_construct_at(this, expected(other));
 				}
 
 				return *this;
@@ -78,11 +78,11 @@ namespace nl {
 				static_assert(std::is_copy_constructible<T>::value && std::is_copy_constructible<E>::value, "");
 				if (_has_value)
 				{
-					_construct_at(_value, T());
+					_construct_at(std::addressof(_value), T());
 				}
 				else
 				{
-					_construct_at(_error, E(other.error()));
+					_construct_at(std::addressof(_error), E(other.error()));
 				}
 			}
 
@@ -91,11 +91,11 @@ namespace nl {
 				static_assert(std::is_copy_constructible<T>::value && std::is_copy_constructible<E>::value, "");
 				if (_has_value)
 				{
-					_construct_at(_value, T(other.value()));
+					_construct_at(std::addressof(_value), T(other.value()));
 				}
 				else
 				{
-					_construct_at(_error, E(other.error()));
+					_construct_at(std::addressof(_error), E(other.error()));
 				}
 			}
 
@@ -104,11 +104,11 @@ namespace nl {
 				static_assert(std::is_move_constructible<T>::value && std::is_move_constructible<E>::value, "");
 				if (this->has_value())
 				{
-					_construct_at(_value, T(std::move(other._value)));
+					_construct_at(std::addressof(_value), T(std::move(other._value)));
 				}
 				else
 				{
-					_construct_at(_error, E(std::move(other._error)));
+					_construct_at(std::addressof(_error), E(std::move(other._error)));
 				}
 			}
 
@@ -118,7 +118,7 @@ namespace nl {
 				if (this != &other)
 				{
 					this->~expected();
-					new (this) expected(std::move(other));
+					_construct_at(this, expected(std::move(other)));
 				}
 
 				return *this;
