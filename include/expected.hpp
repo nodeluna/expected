@@ -56,21 +56,10 @@ namespace nl {
 			template<class U>
 			expected(const expected<U, E>& other) : _has_value(other.has_value())
 			{
+				static_assert(std::is_same<U, nl::monostate>::value, "no available conversion between the provided value types");
 				if (_has_value)
 				{
-					if constexpr (std::is_same<U, monostate>::value)
-					{
-						new (std::addressof(_value)) T();
-					}
-					else if constexpr (std::is_same<U, T>::value)
-					{
-						new (std::addressof(_value)) T(other.value());
-					}
-					else
-					{
-						static_assert(
-						    not std::is_same<U, T>::value, "no available conversion between the provided value types");
-					}
+					new (std::addressof(_value)) T();
 				}
 				else
 				{
@@ -127,7 +116,7 @@ namespace nl {
 				return this->has_value();
 			}
 
-			constexpr const T& value() const&
+			const T& value() const&
 			{
 				if (not _has_value)
 				{
@@ -136,7 +125,7 @@ namespace nl {
 				return _value;
 			}
 
-			constexpr const E& error() const&
+			const E& error() const&
 			{
 				if (_has_value)
 				{
@@ -145,7 +134,7 @@ namespace nl {
 				return _error;
 			}
 
-			constexpr T& value() &
+			T& value() &
 			{
 				if (not _has_value)
 				{
@@ -154,7 +143,7 @@ namespace nl {
 				return _value;
 			}
 
-			constexpr E& error() &
+			E& error() &
 			{
 				if (_has_value)
 				{
@@ -163,7 +152,7 @@ namespace nl {
 				return _error;
 			}
 
-			constexpr const T&& value() const&&
+			const T&& value() const&&
 			{
 				if (not _has_value)
 				{
@@ -172,7 +161,7 @@ namespace nl {
 				return std::move(_value);
 			}
 
-			constexpr const E&& error() const&&
+			const E&& error() const&&
 			{
 				if (_has_value)
 				{
@@ -181,7 +170,7 @@ namespace nl {
 				return std::move(_error);
 			}
 
-			constexpr T&& value() &&
+			T&& value() &&
 			{
 				if (not _has_value)
 				{
@@ -190,7 +179,7 @@ namespace nl {
 				return std::move(_value);
 			}
 
-			constexpr E&& error() &&
+			E&& error() &&
 			{
 				if (_has_value)
 				{
@@ -199,8 +188,8 @@ namespace nl {
 				return std::move(_error);
 			}
 
-			template<class U = std::remove_cv_t<T>>
-			constexpr T value_or(U&& other) const&
+			template<class U = typename std::remove_cv<T>::type>
+			T value_or(U&& other) const&
 			{
 				static_assert(std::is_convertible<U, T>::value, "the provided type must be convertible to the value type");
 				if (_has_value)
@@ -209,8 +198,8 @@ namespace nl {
 					return static_cast<T>(std::forward<U>(other));
 			}
 
-			template<class U = std::remove_cv_t<E>>
-			constexpr E error_or(U&& other) const&
+			template<class U = typename std::remove_cv<E>::type>
+			E error_or(U&& other) const&
 			{
 				static_assert(std::is_convertible<U, E>::value, "the provided type must be convertible to the error type");
 				if (not _has_value)
