@@ -12,6 +12,22 @@
 #include <new>
 #include <stdexcept>
 
+#if __cplusplus >= 201703L
+#define _constexpr constexpr
+#else
+#define _constexpr
+#endif
+
+#if __cplusplus >= 202002L
+#define _constexpr_destructor constexpr
+#define _construct_at(location, arg)\
+	std::construct_at(std::addressof(location), arg)
+#else
+#define _constexpr_destructor
+#define _construct_at(location, arg)\
+	new (std::addressof(location)) arg;
+#endif
+
 namespace nl {
 
 	struct monostate {};
@@ -27,23 +43,25 @@ namespace nl {
 			};
 
 		public:
-			expected(const T& t) : _has_value(true)
+			_constexpr expected(const T& t) : _has_value(true)
 			{
-				new (std::addressof(_value)) T(t);
+				_construct_at(_value, T(t));
 			}
 
-			expected(const E& e) : _has_value(false)
+			_constexpr expected(const E& e) : _has_value(false)
 			{
-				new (std::addressof(_error)) E(e);
+				_construct_at(_error, E(e));
 			}
 
-			expected() : _has_value(true)
+			_constexpr expected() : _has_value(true)
 			{
-				new (std::addressof(_value)) T();
+				static_assert(std::is_default_constructible<T>::value, "");
+				_construct_at(_value, T());
 			}
 
-			expected& operator=(const expected& other)
+			_constexpr expected& operator=(const expected& other)
 			{
+				static_assert(std::is_copy_assignable<T>::value && std::is_copy_assignable<E>::value, "");
 				if (this != &other)
 				{
 					this->~expected();
@@ -54,41 +72,49 @@ namespace nl {
 			}
 
 			template<class U>
-			expected(const expected<U, E>& other) : _has_value(other.has_value())
+			_constexpr expected(const expected<U, E>& other) : _has_value(other.has_value())
 			{
 				static_assert(std::is_same<U, nl::monostate>::value, "no available conversion between the provided value types");
+				static_assert(std::is_copy_constructible<T>::value && std::is_copy_constructible<E>::value, "");
 				if (_has_value)
 				{
-					new (std::addressof(_value)) T();
+					_construct_at(_value, T());
 				}
 				else
 				{
-					new (std::addressof(_error)) E(other.error());
+					_construct_at(_error, E(other.error()));
 				}
 			}
 
-			expected(const expected& other) : _has_value(other.has_value())
+			_constexpr expected(const expected& other) : _has_value(other.has_value())
 			{
+				static_assert(std::is_copy_constructible<T>::value && std::is_copy_constructible<E>::value, "");
 				if (_has_value)
 				{
-					new (std::addressof(_value)) T(other.value());
+					_construct_at(_value, T(other.value()));
 				}
 				else
 				{
-					new (std::addressof(_error)) E(other.error());
+					_construct_at(_error, E(other.error()));
 				}
 			}
 
-			expected(const expected&& other) noexcept : _has_value(other._has_value)
+			_constexpr expected(const expected&& other) noexcept : _has_value(other._has_value)
 			{
+				static_assert(std::is_move_constructible<T>::value && std::is_move_constructible<E>::value, "");
 				if (this->has_value())
-					new (std::addressof(_value)) T(std::move(other._value));
+				{
+					_construct_at(_value, T(std::move(other._value)));
+				}
 				else
-					new (std::addressof(_error)) E(std::move(other._error));
+				{
+					_construct_at(_error, E(std::move(other._error)));
+				}
 			}
 
-			expected& operator=(const expected&& other) noexcept
+			_constexpr expected& operator=(const expected&& other) noexcept
 			{
+				static_assert(std::is_move_assignable<T>::value && std::is_move_assignable<E>::value, "");
 				if (this != &other)
 				{
 					this->~expected();
@@ -97,8 +123,8 @@ namespace nl {
 
 				return *this;
 			}
-
-			~expected()
+			
+			_constexpr_destructor ~expected() 
 			{
 				if (this->has_value())
 					_value.~T();
@@ -106,17 +132,17 @@ namespace nl {
 					_error.~E();
 			}
 
-			bool has_value() const noexcept
+			_constexpr bool has_value() const noexcept
 			{
 				return _has_value;
 			}
 
-			explicit operator bool() const noexcept
+			_constexpr explicit operator bool() const noexcept
 			{
 				return this->has_value();
 			}
 
-			const T& value() const&
+			_constexpr const T& value() const&
 			{
 				if (not _has_value)
 				{
@@ -125,7 +151,7 @@ namespace nl {
 				return _value;
 			}
 
-			const E& error() const&
+			_constexpr const E& error() const&
 			{
 				if (_has_value)
 				{
@@ -134,7 +160,7 @@ namespace nl {
 				return _error;
 			}
 
-			T& value() &
+			_constexpr T& value() &
 			{
 				if (not _has_value)
 				{
@@ -143,7 +169,7 @@ namespace nl {
 				return _value;
 			}
 
-			E& error() &
+			_constexpr E& error() &
 			{
 				if (_has_value)
 				{
@@ -152,7 +178,7 @@ namespace nl {
 				return _error;
 			}
 
-			const T&& value() const&&
+			_constexpr const T&& value() const&&
 			{
 				if (not _has_value)
 				{
@@ -161,7 +187,7 @@ namespace nl {
 				return std::move(_value);
 			}
 
-			const E&& error() const&&
+			_constexpr const E&& error() const&&
 			{
 				if (_has_value)
 				{
@@ -170,7 +196,7 @@ namespace nl {
 				return std::move(_error);
 			}
 
-			T&& value() &&
+			_constexpr T&& value() &&
 			{
 				if (not _has_value)
 				{
@@ -179,7 +205,7 @@ namespace nl {
 				return std::move(_value);
 			}
 
-			E&& error() &&
+			_constexpr E&& error() &&
 			{
 				if (_has_value)
 				{
@@ -189,7 +215,7 @@ namespace nl {
 			}
 
 			template<class U = typename std::remove_cv<T>::type>
-			T value_or(U&& other) const&
+			_constexpr T value_or(U&& other) const&
 			{
 				static_assert(std::is_convertible<U, T>::value, "the provided type must be convertible to the value type");
 				if (_has_value)
@@ -199,7 +225,7 @@ namespace nl {
 			}
 
 			template<class U = typename std::remove_cv<E>::type>
-			E error_or(U&& other) const&
+			_constexpr E error_or(U&& other) const&
 			{
 				static_assert(std::is_convertible<U, E>::value, "the provided type must be convertible to the error type");
 				if (not _has_value)
@@ -210,12 +236,12 @@ namespace nl {
 	};
 
 	template<class E>
-	expected<monostate, E> unexpected(const E& e)
+	_constexpr_destructor expected<monostate, E> unexpected(const E& e)
 	{
 		return expected<monostate, E>(e);
 	}
 
-	expected<monostate, std::string> unexpected(const char* e)
+	_constexpr_destructor expected<monostate, std::string> unexpected(const char* e)
 	{
 		return unexpected<std::string>(std::string(e));
 	}
